@@ -1,4 +1,4 @@
-import { riskClass } from "../config.js";
+import { riskClass, getEffectiveRisk } from "../config.js";
 
 // alerts = zones with risk != low, sorted by severity (derived client-side
 // from /api/zones/ in App.jsx). Swap this prop for a fetchServerAlerts()
@@ -14,10 +14,10 @@ export default function AlertsPanel({ alerts }) {
       {alerts &&
         alerts.map((z) => (
           <div className="alert-item" key={z.id}>
-            <span className={"sev " + riskClass(z.risk)}></span>
+            <span className={"sev " + riskClass(getEffectiveRisk(z))}></span>
             <div>
               <div className="txt">
-                {z.name}, {z.state} — {z.risk} risk ({z.rainfall_24h_mm} mm / 24h)
+                {z.name}, {z.state} — {getEffectiveRisk(z)} risk ({z.rainfall_24h_mm} mm / 24h)
               </div>
               <div className="meta">
                 {z.last_updated ? new Date(z.last_updated).toLocaleString("en-IN", { hour12: false }) : "—"}

@@ -73,6 +73,11 @@ def fetch_and_cache_zone(zone: Zone, past_days: int = DEFAULT_PAST_DAYS):
             zone=zone, date=day, defaults={"precipitation_mm": value}
         )
         readings.append(reading)
+
+    # Invalidate AI/ML prediction cache when weather is updated
+    from django.core.cache import cache
+    cache.delete(f"ml_pred_{zone.id}")
+
     return readings
 
 

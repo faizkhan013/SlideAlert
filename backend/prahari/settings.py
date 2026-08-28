@@ -10,6 +10,7 @@ This is a development configuration — before deploying, at minimum:
 """
 
 import os
+import sys
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -103,3 +104,11 @@ REST_FRAMEWORK = {
 # How long a cached rainfall reading is considered fresh before we
 # re-fetch it from Open-Meteo (see monitoring/services.py).
 RAINFALL_CACHE_MINUTES = int(os.environ.get("RAINFALL_CACHE_MINUTES", "30"))
+
+# ---- AI/ML MODULE INTEGRATION CONFIGURATION ----
+SLIDELAND_DIR = os.path.abspath(os.path.join(BASE_DIR, ".."))
+if SLIDELAND_DIR not in sys.path:
+    sys.path.append(SLIDELAND_DIR)
+
+SLIDEALERT_DEMO_MODE = os.environ.get("SLIDEALERT_DEMO_MODE", "True") == "True"
+

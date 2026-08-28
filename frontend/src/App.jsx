@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
-import { RISK_SEVERITY } from "./config.js";
-import { useZones } from "./hooks/useApi.js";
+import { RISK_SEVERITY, getEffectiveRisk } from "./config.js";
+import { useZones, useAffectedRoads } from "./hooks/useApi.js";
 
 import Sidebar from "./components/Sidebar.jsx";
 import MapPane from "./components/MapPane.jsx";
@@ -19,7 +19,9 @@ function deriveStats(zones) {
   const counts = { low: 0, moderate: 0, high: 0, severe: 0 };
   let lastUpdated = "";
   zones.forEach((z) => {
-    const k = (z.risk || "").toLowerCase();
+    let k = (getEffectiveRisk(z) || "").toLowerCase();
+    if (k === "severe" || k === "critical") k = "high";
+    if (k === "medium") k = "moderate";
     if (counts[k] !== undefined) counts[k]++;
     if (z.last_updated && z.last_updated > lastUpdated) lastUpdated = z.last_updated;
   });
@@ -31,10 +33,10 @@ function deriveStats(zones) {
 function deriveAlerts(zones) {
   if (!zones) return null;
   return [...zones]
-    .filter((z) => (z.risk || "").toLowerCase() !== "low")
+    .filter((z) => (getEffectiveRisk(z) || "").toLowerCase() !== "low")
     .sort((a, b) => {
-      const sa = RISK_SEVERITY[(a.risk || "").toLowerCase()] ?? -1;
-      const sb = RISK_SEVERITY[(b.risk || "").toLowerCase()] ?? -1;
+      const sa = RISK_SEVERITY[(getEffectiveRisk(a) || "").toLowerCase()] ?? -1;
+      const sb = RISK_SEVERITY[(getEffectiveRisk(b) || "").toLowerCase()] ?? -1;
       return sb - sa;
     });
 }
@@ -52,6 +54,8 @@ export default function App() {
     if (!zones) return null;
     return zones.find((z) => z.id === selectedId) || zones[0] || null;
   }, [zones, selectedId]);
+
+  const { data: roadsData, loading: roadsLoading } = useAffectedRoads(selected?.id);
 
   useEffect(() => {
     if (!selectedId && zones && zones.length > 0) setSelectedId(zones[0].id);
@@ -88,9 +92,9 @@ export default function App() {
           </div>
 
           <div className="grid">
-            <MapPane zones={zones} selected={selected} onSelect={(z) => setSelectedId(z.id)} />
+            <MapPane zones={zones} selected={selected} onSelect={(z) => setSelectedId(z.id)} roadsData={roadsData} />
             <div className="detail-pane">
-              <ZoneDetailPanel zone={selected} onRefreshed={refetch} />
+              <ZoneDetailPanel zone={selected} onRefreshed={refetch} roadsData={roadsData} roadsLoading={roadsLoading} />
               <SparklinePanel zone={selected} />
               <AlertsPanel alerts={alerts} />
             </div>

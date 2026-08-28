@@ -1,4 +1,4 @@
-import { riskClass } from "../config.js";
+import { riskClass, getEffectiveRisk } from "../config.js";
 
 export default function Sidebar({ zones, selected, onSelect, connection }) {
   return (
@@ -19,7 +19,7 @@ export default function Sidebar({ zones, selected, onSelect, connection }) {
                 onClick={() => onSelect(z)}
               >
                 <span>{z.name}</span>
-                <span className={"dot " + riskClass(z.risk)}></span>
+                <span className={"dot " + riskClass(getEffectiveRisk(z))}></span>
               </div>
             ))}
         </div>

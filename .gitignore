@@ -12,3 +12,13 @@ backend/db.sqlite3
 .env
 frontend/.env
 backend/.env
+
+# Dataset and Model weights
+dataset/
+ai_ml/models/*.pth
+ai_ml/models/*.pt
+ai_ml/models/*.joblib
+__pycache__/
+*.pyc
+.venv/
+venv/

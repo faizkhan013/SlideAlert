@@ -101,3 +101,39 @@ export function fetchServerStats() {
     return r.json();
   });
 }
+
+/**
+ * GET /api/zones/:id/affected-roads/
+ * Fetches the road segments and their associated risk indicators.
+ */
+export function useAffectedRoads(zoneId) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchRoads = useCallback(() => {
+    if (!zoneId) {
+      setData(null);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    fetch(`${API_BASE}/zones/${zoneId}/affected-roads/`)
+      .then((r) => {
+        if (!r.ok) throw new Error("affected-roads " + r.status);
+        return r.json();
+      })
+      .then((payload) => {
+        setData(payload);
+        setError(null);
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [zoneId]);
+
+  useEffect(() => {
+    fetchRoads();
+  }, [fetchRoads]);
+
+  return { data, error, loading, refetch: fetchRoads };
+}

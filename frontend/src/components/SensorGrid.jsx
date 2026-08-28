@@ -1,4 +1,4 @@
-import { riskClass } from "../config.js";
+import { riskClass, getEffectiveRisk } from "../config.js";
 
 export default function SensorGrid({ zones, selected, onSelect }) {
   return (
@@ -7,23 +7,26 @@ export default function SensorGrid({ zones, selected, onSelect }) {
       {!zones && <div className="loading-text">Loading zones…</div>}
       <div className="sensor-grid">
         {zones &&
-          zones.map((z) => (
-            <div
-              key={z.id}
-              className={"sensor-card" + (selected?.id === z.id ? " active" : "")}
-              onClick={() => onSelect(z)}
-            >
-              <div className="sensor-card-top">
-                <span className="sensor-name">{z.name}</span>
-                <span className={"risk-badge small " + riskClass(z.risk)}>{z.risk}</span>
+          zones.map((z) => {
+            const effectiveRisk = getEffectiveRisk(z);
+            return (
+              <div
+                key={z.id}
+                className={"sensor-card" + (selected?.id === z.id ? " active" : "")}
+                onClick={() => onSelect(z)}
+              >
+                <div className="sensor-card-top">
+                  <span className="sensor-name">{z.name}</span>
+                  <span className={"risk-badge small " + riskClass(effectiveRisk)}>{effectiveRisk}</span>
+                </div>
+                <div className="sensor-card-meta">{z.state}</div>
+                <div className="sensor-card-rain">{z.rainfall_24h_mm} mm <span>/ 24h</span></div>
+                <div className="sensor-card-updated">
+                  {z.last_updated ? new Date(z.last_updated).toLocaleTimeString("en-IN", { hour12: false }) : "—"}
+                </div>
               </div>
-              <div className="sensor-card-meta">{z.state}</div>
-              <div className="sensor-card-rain">{z.rainfall_24h_mm} mm <span>/ 24h</span></div>
-              <div className="sensor-card-updated">
-                {z.last_updated ? new Date(z.last_updated).toLocaleTimeString("en-IN", { hour12: false }) : "—"}
-              </div>
-            </div>
-          ))}
+            );
+          })}
       </div>
     </div>
   );
