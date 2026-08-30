@@ -1,254 +1,265 @@
-# SlideAlert
+# SlideAlert: Landslide Early Warning System
 
+SlideAlert is an integrated, full-stack geospatial landslide hazard screening and early warning dashboard designed for unstable mountain terrains. The system combines deep-learning-based spatial landslide detection with real-time meteorological forecast features to evaluate localized landslide hazards and map nearby road network risks.
 
-## Contents
-- [Landslide4Sense 2022](#landslide4sense-2022)
-- [Globally Distributed Landslide Detection](#globally-distributed-landslide-detection)
-- [Challenge Description](#challenge-description)
-- [Data Description](#data-description)
-- [Baseline Code](#baseline-code)
-- [Evaluation Metric](#evaluation-metric)
-- [Submission Guide](#submission-guide)
-- [Awards and Prizes](#awards-and-prizes)
-- [Timeline](#timeline)
-- [Q&A](#frequently-asked-questions)
-- [Citation](#citation)
+---
 
+## 1. Project Overview
+SlideAlert operates as a multi-stage hazard monitoring platform. It uses satellite multi-spectral data and topographic elevation indicators to map historic landslide footprints and evaluate zone susceptibility. This spatial vulnerability is combined dynamically with real-time precipitation forecasts from meteorological APIs to compile a live hazard risk rating (`low`, `moderate`, `high`, `critical`) and display affected road segments on an interactive GIS map.
 
-## Landslide4Sense 2022
-![Logo](/image/Competition_figure.png?raw=true "landslide_detection")
+---
 
-The [Landslide4Sense](https://www.iarai.ac.at/landslide4sense/) competition, organized by [Institute of Advanced Research in Artificial Intelligence (IARAI)](https://www.iarai.ac.at/), aims to promote research in large-scale landslide detection from multi-source satellite remote sensing imagery. Landslide4Sense dataset has been derived from diverse landslide-affected areas around the world from 2015 through 2021. This benchmark dataset provides an important resource for remote sensing, computer vision, and machine learning communities to support studies on image classification and landslide detection.
-Interested in innovative algorithms for landslide detection using satellite imagery? Join us to help shape Landslide4Sense 2022!
+## 2. Key Features
+*   **Deep Learning Segmentation**: Leverages a 2D U-Net model mapping 14-channel satellite imagery to locate landslide boundaries.
+*   **Dynamic Risk Evaluation**: Fuses spatial landslide masks (50%) with dynamic 14-day cumulative rainfall readings (50%).
+*   **GIS Road-Risk Screening**: Intersects localized road networks within a 5 km buffer around monitored zones to highlight hazard routes.
+*   **Interactive Dashboard**: Provides real-time stats, 14-day rainfall sparklines, scrolling warning tickers, and Leaflet map panels.
+*   **Fail-safe Caching**: Protects APIs against network latency via Django memory caches with automatic fallback configurations.
 
-## Globally Distributed Landslide Detection
+---
 
-Landslides are a natural phenomenon with devastating consequences, frequent in many parts of the world. Thousands of small and medium-sized ground movements follow earthquakes or heavy rain falls. Landslides have become more damaging in recent years due to climate change, population growth, and unplanned urbanization in unstable mountain areas. Early landslide detection is critical for quick response and management of the consequences. Accurate detection provides information on the landslide exact location and extent, which is necessary for landslide susceptibility modeling and risk assessment. 
-Recent advances in machine learning and computer vision combined with a growing availability of satellite imagery and computational resources have facilitated rapid progress in landslide detection. Landslide4Sense aims to promote research in this direction and challenges participants to detect landslides around the globe using multi-sensor satellite images. The images are collected from diverse geographical regions offering an important resource for remote sensing, computer vision, and machine learning communities. 
+## 3. System Architecture
+The application is decoupled into three core project directories:
 
-## Challenge Description
-
-The aim of the competition is to promote innovative algorithms for automatic landslide detection using remote sensing images around the globe, and to provide objective and fair comparisons among different methods. The competition ranking is based on a quantitative accuracy metric (F1 score) computed with respect to undisclosed test samples. Participants will be given a limited time to submit their landslide detection results after the competition starts. The winners will be selected from the top three solutions in the competition ranking.
-
-Special prizes will be awarded to creative and innovative solutions selected by the competition's scientific committee based on originality, generality, and scalability.
-
-**The competition will consist of two phases:**
-
-**Phase 1 (April 1 - June 14):** Participants are provided with training data (with labels) and additional validation images (without labels) to train and validate their methods. Participants can submit their landslide detection results for the validation set to the competition website to get feedback on the performance (Precision, Recall, and F1 score). The ranking of the submission will be displayed on the online leaderboard. In addition, participants should submit a short description of the methodology (1-2 pages) [here](https://cloud.iarai.ac.at/index.php/s/sYQgdHryGMPQsHa) using the [IJCAI](https://www.ijcai.org/authors_kit) LaTeX styles, and Word templates.
-
-**Phase 2 (June 15 - June 20):** Participants receive the test data set (without labels) and must submit their landslide detection results within 5 days from the release of the test data set. The submissions during that week will be limited to 10 times and only the F1 score will be displayed on the online leaderboard. 
-
-The winners of Phase 2 of the competition will be asked to write a 4-page IJCAI-style formatted manuscript that will be included in the CDCEO workshop. Each manuscript should describe the addressed problem, the proposed method, and the results. The winners will need to prepare a short pre-recorded video presentation for the workshop. The winners should also be present for a live Question-and-Answer period with the audience during the workshop.
-
-The winners **must** submit the working code, the learned parameters, and the manuscript, and present their work in the CDCEO workshop at IJCAI-ECAI 2022 to receive the prizes in accordance with the terms and conditions of the competition.
-
-
-## Data Description
-
-
-The Landslide4Sense dataset has three splits, training/validation/test, consisting of 3799, 245, and 800 image patches, respectively. Each image patch is a composite of 14 bands that include:
-
-- **Multispectral data** from [Sentinel-2](https://sentinel.esa.int/web/sentinel/missions/sentinel-2): B1, B2, B3, B4, B5, B6, B7, B8, B9, B10, B11, B12.
-
-- **Slope data** from [ALOS PALSAR](https://www.usgs.gov/centers/eros/science/usgs-eros-archive-radar-alos-palsar-radar-processing-system): B13.       
-
-- **Digital elevation model (DEM)** from [ALOS PALSAR](https://www.usgs.gov/centers/eros/science/usgs-eros-archive-radar-alos-palsar-radar-processing-system): B14.
-
-All bands in the competition dataset are resized to the resolution of ~10m per pixel. The image patches have the size of 128 x 128 pixels and are labeled pixel-wise.
-
-**Download links:** [training](https://cloud.iarai.ac.at/index.php/s/KrwKngeXN7KjkFm) and [validation](https://cloud.iarai.ac.at/index.php/s/N6TacGsfr5nRNWr).   
-
-
-![Logo](/image/Data_figure.png?raw=true "landslide_detection")
-
-The _Landslide4Sense_ dataset is structured as follows:
+```text
+               ┌──────────────────────────────────────────────────┐
+               │              OpenStreetMap / Overpass            │
+               │            (Road Geometries 5km Buffer)          │
+               └────────────────────────┬─────────────────────────┘
+                                        │
+                                        ▼ (GeoJSON)
+┌──────────────────────┐       ┌─────────────────┐       ┌──────────────────────┐
+│    Open-Meteo API    │       │                 │       │   React Dashboard    │
+│ (Rainfall Forecast)  ├──────►│  Django Backend ├──────►│      (Leaflet)       │
+└──────────────────────┘       │  (REST API /    │       │                      │
+                               │   SQLite Cache) │       └──────────────────────┘
+┌──────────────────────┐       │                 │
+│  Landslide4Sense H5  ├──────►│                 │
+│  (14-Band Imagery)   │       └────────┬────────┘
+└──────────────────────┘                │
+                                        ▼ (Inference Logits)
+                               ┌─────────────────┐
+                               │  U-Net Model    │
+                               │  (PyTorch CPU)  │
+                               └─────────────────┘
 ```
+
+---
+
+## 4. AI/ML Pipeline
+1.  **Standardization**: Raw HDF5 files are standardized per-band using pre-calculated dataset baseline mean and standard deviations.
+2.  **U-Net Inference**: Passes 14-channel input to obtain sigmoid probabilities mapping to spatial landslide layouts.
+3.  **Area Aggregation**: Summarizes the proportion of pixels above the classification threshold ($0.50$) to compute landslide area percentage.
+4.  **Weather Fusion**: Integrates spatial area results with 24h, 3d, 7d, and 14d rainfall metrics extracted from Open-Meteo readings.
+5.  **Heuristic Classification**: Computes a diagnostic 0–100 risk score and categorizes it into a discrete risk rating.
+
+---
+
+## 5. U-Net Model
+*   **Architecture**: 2D U-Net with 14 input channels (12 Sentinel-2 multispectral bands + 1 ALOS PALSAR Slope band + 1 ALOS PALSAR DEM band) and 1 output channel.
+*   **Parameters**: Approximately 31,000,000 parameters.
+*   **Trained Weight Checkpoint**: Saved locally at `ai_ml/models/baseline_unet_best.pth`.
+*   **Loss Function**: Combined BCE Loss (0.50) + Dice Loss (0.50) to optimize pixel-level accuracy alongside boundary overlap.
+
+---
+
+## 6. Landslide4Sense Dataset
+The dataset must be obtained separately from the official Landslide4Sense challenge repositories and placed in the project structure under:
+`D:\slideland\dataset\Landslide4Sense`
+
+Expected directory structure:
+```text
+dataset/Landslide4Sense/
 ├── TrainData/
-│   ├── img/     
-|   |   ├── image_1.h5
-|   |   ├── ...
-|   |   ├── image_3799.h5
-│   ├── mask/
-|   |   ├── mask_1.h5
-|   |   ├── ...
-|   |   ├── mask_3799.h5
-├── ValidData/
-|   ├── img/     
-|   |   ├── image_1.h5
-|   |   ├── ...
-|   |   ├── image_245.h5
-├── TestData/
-    ├── img/     
-        ├── image_1.h5
-        ├── ...
-        ├── image_800.h5
+│   ├── img/    # image_1.h5 ... image_3799.h5 (128x128x14)
+│   └── mask/   # mask_1.h5 ... mask_3799.h5 (128x128)
+└── ValidData/
+    └── img/    # image_1.h5 ... image_245.h5 (128x128x14, no masks)
+```
+*Note: The raw dataset is excluded from Git tracking.*
+
+---
+
+## 7. Model Evaluation
+The baseline U-Net was evaluated globally across all $12,451,840$ pixels in the $760$ holdout validation split:
+*   **Pixel Accuracy**: `96.38%`
+*   **Precision**: `35.60%`
+*   **Recall**: `80.31%`
+*   **F1 / Dice Score**: `49.33%`
+*   **Intersection over Union (IoU)**: `32.74%`
+*   **Average Validation Loss (Combined BCE + Dice)**: `0.4380`
+
+---
+
+## 8. Rainfall Integration
+Dynamic weather readings are handled by the features module inside `ai_ml/features/rainfall.py`. This script extracts window precipitation totals:
+*   `rainfall_24h_mm`: Cumulative 24-hour forecast precipitation.
+*   `rainfall_3d_mm`, `rainfall_7d_mm`, `rainfall_14d_mm`: Cumulative historical antecedent precipitation.
+*   `max_rainfall_14d_mm`, `heavy_rain_days`: Structural rainfall trigger events.
+
+---
+
+## 9. Risk Engine
+The risk engine (`ai_ml/risk_model/risk_engine.py`) maps the dynamic landslide risk rating using domain-expert thresholds:
+*   **ML Segmentation Score (50%)**: Derived linearly from landslide probability (max 25 pts) and area percentage capped at 15.0% (max 25 pts).
+*   **Rainfall Feature Score (50%)**: Computed from 24h forecast (max 15 pts), 3d rain (max 15 pts), 7d rain (max 10 pts), and 14d rain (max 10 pts).
+*   **Heuristic Risk Rating**:
+    *   $\ge 75$: `critical`
+    *   $\ge 50$: `high`
+    *   $\ge 25$: `moderate`
+    *   $< 25$: `low`
+
+---
+
+## 10. 5 km Road-Risk Screening
+*   **Geospatial Scope**: Analyzes road networks within a 5 km radius surrounding the monitored zone center.
+*   **Proximity-Based Screening**: Highlights road risk categories based on distance to the zone center, driven by the overall ML output risk level:
+    *   *High Risk (Avoid)*: Distance $\le 1.0\text{ km}$ under overall High/Critical zone risk (RED).
+    *   *Moderate Risk (Caution)*: Distance $\le 2.5\text{ km}$ under overall High/Critical zone risk, or $\le 2.0\text{ km}$ under Moderate zone risk (ORANGE).
+    *   *Low Risk (Low Risk)*: Beyond caution thresholds but inside the 5 km monitoring zone (GREEN).
+*   **Demo Disclaimer**: This is a spatial proximity screening feature for demonstration purposes. It does **not** model structural road failures or calculate individual slope collapse probabilities.
+
+---
+
+## 11. Backend — Django + Django REST Framework
+The backend service resides in `backend/`. It exposes REST APIs for querying zone statistics, alerts, and roads, and integrates the PyTorch U-Net predictor adapter dynamically.
+
+---
+
+## 12. Database — SQLite
+The development environment is configured with a local SQLite database (`backend/db.sqlite3`) managing seeded station zones and cached precipitation telemetry. For high-scale production, this can be migrated to PostgreSQL/PostGIS.
+
+---
+
+## 13. Frontend — React + Leaflet
+The user dashboard resides in `frontend/`. It uses React (bootstrapped with Vite) and React-Leaflet to project map markers, sparkline charts, and warning panels.
+
+---
+
+## 14. API Endpoints
+*   `GET /api/zones/` - List all monitored zones (live rainfall, overall risk rating, sparkline series).
+*   `GET /api/zones/<id>/` - Retrieve a single zone's details.
+*   `POST /api/zones/<id>/refresh/` - Force an API re-fetch from Open-Meteo, bypassing cache.
+*   `GET /api/stats/` - Retrieve overall dashboard metrics (monitored, covers, high/critical counts).
+*   `GET /api/alerts/` - Retrieve active alerts sorted by severity.
+*   `GET /api/zones/<id>/affected-roads/` - Retrieve the GeoJSON road network within 5 km of the zone center, with risk attributes.
+
+---
+
+## 15. Project Structure
+```text
+D:\slideland/
+├── ai_ml/                   # Deep learning and feature engineering modules
+│   ├── preprocessing/       # Normalization and standardization
+│   ├── segmentation/        # U-Net PyTorch models & dataloaders
+│   ├── inference/           # Standalone and adapter predictors
+│   ├── risk_model/          # Heuristic risk engine & unit tests
+│   └── models/              # Checkpoint model file and evaluation CSVs
+│
+├── backend/                 # Django REST Framework backend
+│   ├── monitoring/          # API models, serializers, views, and unit tests
+│   └── prahari/             # Project settings, routing, and configurations
+│
+├── frontend/                # Vite React application
+│   ├── src/                 # Application components, Leaflet map, API hooks
+│   └── public/              # Static visual assets
+│
+└── dataset/                 # Landslide4Sense dataset directory (local only)
 ```
 
-Note that the label files (mask files) are only accessible in the training set.
+---
 
-Mapping classes used in the competition:
+## 16. AI/ML Setup
+1.  Navigate to the project root and activate the pre-configured virtual environment:
+    *   **PowerShell**: `.\.venv\Scripts\Activate.ps1`
+    *   **CMD**: `.\.venv\Scripts\activate.bat`
+2.  Install dependencies:
+    ```bash
+    pip install -r ai_ml/requirements.txt
+    ```
 
-| Class Number |        Class Name     | Class Code in the Label |
- :-: | :-: | :-:
-| 1 | Non-landslide | 0 |
-| 2 | Landslide | 1 |
+---
 
+## 17. Backend Setup
+1.  From the `backend/` directory, apply database migrations:
+    ```bash
+    python manage.py migrate
+    ```
+2.  Seed the default stations:
+    ```bash
+    python manage.py loaddata seed_zones.json
+    ```
 
-## Baseline Code
+---
 
-This repository provides a simple baseline for the [Landslide4Sense](https://www.iarai.ac.at/landslide4sense/) competition based on the state-of-the-art DL model for semantic segmentation, implemented in PyTorch. It contains a customizable training script for [U-Net](https://arxiv.org/abs/1505.04597) along with the dataloader for reading the training and test samples (see `landslide_dataset.py` in the `dataset` folder).
+## 18. Frontend Setup
+1.  From the `frontend/` directory, install package dependencies:
+    ```bash
+    npm install
+    ```
 
-The provided code can be used to predict baseline results for the competition or as a comparison method for your solutions. Feel free to fork this repository for further use in your work!
+---
 
-**Required packages and libraries:**
+## 19. How to Run Locally
 
-- Pytorch 1.10
-- CUDA 10.2
-- h5py
-
-**To train the baseline model:**
-
+### Start Django Backend
+From the `backend/` folder:
+```bash
+python manage.py runserver
 ```
-python Train.py --data_dir <THE-ROOT-PATH-OF-THE-DATA> \
-                --gpu_id 0
-```  
+The server will run on `http://127.0.0.1:8000/`.
 
-Please replace `<THE-ROOT-PATH-OF-THE-DATA>` with the local path where you store the Landslide4Sense data.
-
-The trained model will then be saved in `./exp/`
-
-**To generate prediction maps on the validation set with the trained model:**
-
+### Start Vite React Frontend
+From the `frontend/` folder:
+```bash
+npm run dev
 ```
-python Predict.py --data_dir <THE-ROOT-PATH-OF-THE-DATA> \
-               --gpu_id 0 \
-               --test_list ./dataset/valid.txt \
-               --snapshot_dir ./validation_map/ \
-               --restore_from ./exp/<THE-SAVED-MODEL-NAME>.pth
-```  
-Please replace `<THE-SAVED-MODEL-NAME>` with the name of your trained model.
+The dashboard will run on `http://localhost:5173/`.
 
-Alternatively, our **pretrained model** is available at    [here](https://cloud.iarai.ac.at/index.php/s/CgbjDRK6B5KYaLE).
+---
 
+## 20. Model Inference
+To run a standalone U-Net prediction from Python:
+```python
+from ai_ml.inference.predictor import SlideAlertPredictor
 
-
-The generated prediction maps (in `h5` format) will then be saved in `./validation_map/`
-
-**To generate prediction maps on the test set with the trained model:**
-
-```
-python Predict.py --data_dir <THE-ROOT-PATH-OF-THE-DATA> \
-               --gpu_id 0 \
-               --test_list ./dataset/test.txt \
-               --snapshot_dir ./test_map/ \
-               --restore_from ./exp/<THE-SAVED-MODEL-NAME>.pth
-```  
-
-The generated prediction maps (in `h5` format) will then be saved in `./test_map/`
-
-## Evaluation Metric
-
-The F1 score of the landslide category is adopted as the evaluation metric for the leaderboard:
-
-![](https://latex.codecogs.com/svg.image?F_1=&space;2\cdot&space;\frac{precision\cdot&space;recall}{precision&plus;recall})
-
-With the provided baseline method and the pretrained model, you can achieve the following result on the validation set:
-
-| Validation Set | Precision | Recall | F1 Score |
-| :--: | :--: | :--: | :--: |
-| U-Net Baseline | 51.75 | 65.50 | 57.82 |
-
-Note that the evaluation ranking is **ONLY** based on the **F1 score of the landslide category** in both validation and test phases.
-
-## Submission Guide
-
-                                                                                            
-For both validation and test phases, participants should submit a `ZIP` file containing the prediction files for all test images. Each pixel in the prediction file corresponds to the class category with `1` for *landslide regions* and `0` for *non-landslide regions* (similar to the reference data of the training set).
-
-Specifically, the predictions for each test image should be encoded as a `h5` file with the Byte (uint8) data type, and match the dimensions of the test images (i.e., `128×128`).
-
-
-The submitted `ZIP` file in the validation phase should be structured as follows:
-```
-├── submission_name.zip     
-    ├── mask_1.h5
-    ├── mask_2.h5
-    ├── ...
-    ├── mask_245.h5
+predictor = SlideAlertPredictor()
+res = predictor.predict_image("D:/slideland/dataset/Landslide4Sense/TrainData/img/image_241.h5", threshold=0.5)
+print("Landslide Probability:", res["landslide_probability"])
+print("Landslide Area %:", res["landslide_area_percent"])
 ```
 
-The submitted `ZIP` file in the test phase should be structured as follows:
+---
+
+## 21. Model Evaluation
+To execute the evaluation script and refresh all baseline metrics and threshold charts:
+```bash
+python ai_ml/models/evaluation/run_evaluation.py
 ```
-├── submission_name.zip     
-    ├── mask_1.h5
-    ├── mask_2.h5
-    ├── ...
-    ├── mask_800.h5
-```
+This updates files inside `ai_ml/models/evaluation/`.
 
-Sample command for the `ZIP` file generation:
-```
-cd ./validation_map
-zip <THE-SUBMISSION-NAME>.zip ./*
-```
+---
 
-## Awards and Prizes
-The winners of the competition will be selected from the top three ranked solutions and will be awarded the following prizes:
-- First-ranked team: Voucher or cash prize worth **5,000 EUR** to the participant/team and one free IJCAI-ECAI 2022 conference registration
+## 22. Testing
+*   **Run Django API tests**:
+    ```bash
+    python backend/manage.py test monitoring
+    ```
+*   **Run Risk Engine unit tests**:
+    ```bash
+    python -m unittest ai_ml/risk_model/test_risk_engine.py
+    ```
 
-- Second-ranked team: Voucher or cash prize worth **3,000 EUR** to the participant/team and one free IJCAI-ECAI 2022 conference registration
+---
 
-- Third-ranked team: Voucher or cash prize worth **2,000 EUR** to the participant/team and one free IJCAI-ECAI 2022 conference registration
+## 23. Important Limitations
+1.  **Static Segmentation**: The deep learning model identifies *existing* landslides in remote sensing imagery. It is not a predictive modeling tool for future slope failure events.
+2.  **Uncalibrated Thresholds**: The 0.50 classification boundary is standard but not statistically optimized. Physical deployments require ROC curve calibrations to balance false warnings.
+3.  **Heuristic Risk**: Due to a lack of time-aligned landslide occurrence logs, the risk rating relies on geological threshold rules rather than supervised tabular model training (such as XGBoost).
 
-- **Special prizes** will be awarded for creative and innovative solutions selected by the workshop's scientific committee.
+---
 
-
-
-## Timeline 
-
-
-- **April 1 (Phase 1):** Contest opens. Release training and validation data. The validation leaderboard starts to receive submissions.
-- **June 12 (Phase 1):** Submit a short description of the methodology (1-2 pages) [here](https://cloud.iarai.ac.at/index.php/s/sYQgdHryGMPQsHa) using the [IJCAI](https://www.ijcai.org/authors_kit) LaTeX styles, and Word templates.
-- **June 15 (Phase 2):** Release test data. The validation leaderboard closes and the test leaderboard starts to receive submissions.
-- **June 20 (Phase 2):** The test leaderboard stops accepting submissions.
-- **June 25:** Winner announcement. Invitations to present at the Special Competition Session at the CDCEO workshop.
-- **July 10:** Full manuscript (4-pages, IJCAI formatted) submission deadline and pre-recorded presentation video deadline.
-
-## Frequently Asked Questions
-- **Q: What is the rule for registration in the competition?**  
-A: The valid participation is determined by the short abstract of the methodology (1-2 pages) where all members of your team should be clearly stated. In other words, only team members explicitly and clearly stated on the short abstract will be considered for the next phase of the competition, i.e. being eligible to be awarded as winners. Furthermore, no overlap among teams is allowed in the test phase of the competition, i.e. one person can only be a member of one team. Adding more team members after submitting the short abstract is not feasible.
-
-- **Q: Is there any limit on the number of submissions?**  
-A: In phase 1 (or the validation phase), there is no limit to the number of submissions but participants can have at most 10 results on the leaderboard. Participants can delete their existing submissions and resubmit new results to validate more trials.  
-In phase 2 (or the test phase), the number of submissions is strictly limited to 10, and participants will have no permission to delete their existing submissions.
-
-- **Q: Why does my submission raise an error?**  
-A: The most possible error for submission happens when participants zip the prediction files with the folder containing these files. To avoid this error, just zip the prediction files directly without a folder inside.
-
-- **Q: What are the 14 bands in the dataset?**  
-A: The Landslide4Sense dataset is a composite of 14 bands that include:  
-– Multispectral data from Sentinel-2: B1, B2, B3, B4, B5, B6, B7, B8, B9, B10, B11, B12.  
-– Slope data from ALOS PALSAR: B13.  
-– Digital elevation model (DEM) from ALOS PALSAR: B14.  
-Note that the band 8a in the Sentinel-2 image is omitted in the original data collection, so band 1 to 12 in the dataset corresponds to those 12 bands in Sentinel-2 data.
-
-- **Q: What are the coordinates and dates of acquisition of the data?**  
-A: The dataset is collected from different countries and regions all over the world (e.g., Japan and other countries or regions). The detailed geographic information and acquisition time will not be released at the current phase in case participants may directly look for the corresponding high-resolution images to check.
-
-- **Q: Why can’t I get access to the competition forum?**  
-A: To access the [competition forum](https://www.iarai.ac.at/landslide4sense/forums/), you need to first log in to the IARAI website.
-
-## Citation
-Please cite the following paper if you use the data or the codes: 
-
-```
-@article{L4S-2022,
-  author={Ghorbanzadeh, Omid and Xu, Yonghao and Zhao, Hengwei and Wang, Junjue and Zhong, Yanfei and Zhao, Dong and Zang, Qi and Wang, Shuang and Zhang, Fahong and Shi, Yilei and Zhu, Xiao Xiang and Bai, Lin and Li, Weile and Peng, Weihang and Ghamisi, Pedram},
-  journal={IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing},
-  title={The Outcome of the 2022 Landslide4Sense Competition: Advanced Landslide Detection From Multisource Satellite Imagery},
-  year={2022},
-  volume={15},
-  number={},
-  pages={9927-9942},
-  doi={10.1109/JSTARS.2022.3220845}}
-```
+## 24. Team Development Notes
+*   **Virtual Environments**: Do not commit the local virtual environment `.venv/` to Git.
+*   **Datasets**: Keep `dataset/` under root ignored.
+*   **Weight File**: `ai_ml/models/baseline_unet_best.pth` is tracked using Git LFS due to its size (65.95 MB). Do not commit duplicate weight files.
