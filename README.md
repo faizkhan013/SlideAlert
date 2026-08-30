@@ -67,10 +67,12 @@ The application is decoupled into three core project directories:
 The raw Landslide4Sense dataset is **intentionally NOT stored in this GitHub repository** because of its large size (~9.66 GB total raw size). Team members should clone the repository first, and then separately download and set up the dataset locally.
 
 ### A. Download Source
-1. **Official IARAI Download Links**:
-   *   **Training Set (with labels)**: [Download Training Data (Cloud IARAI)](https://cloud.iarai.ac.at/index.php/s/KrwKngeXN7KjkFm)
-   *   **Validation Set (no labels)**: [Download Validation Data (Cloud IARAI)](https://cloud.iarai.ac.at/index.php/s/N6TacGsfr5nRNWr)
-2. Obtain both zip files (`TrainData.zip` and `ValidData.zip`) and extract them locally.
+1. Download the Landslide4Sense dataset from the official Landslide4Sense source/competition page. The original direct Cloud IARAI download links are no longer available.
+2. Refer to the official [iarai/Landslide4Sense-2022 GitHub Repository](https://github.com/iarai/Landslide4Sense-2022) which documents the dataset requirements and challenge structure.
+3. Extract the downloaded dataset files locally. The official dataset structure includes:
+   *   `TrainData/` containing `img/` and `mask/` folders.
+   *   `ValidData/` containing `img/` folder.
+   *   `TestData/` containing `img/` folder.
 
 ### B. Expected Dataset Folder Structure
 Place the extracted folders under the `D:\slideland\dataset` directory. The project's deep learning scripts and Django backend serializer expect EXACTLY the following relative file paths:
