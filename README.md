@@ -63,20 +63,69 @@ The application is decoupled into three core project directories:
 
 ---
 
-## 6. Landslide4Sense Dataset
-The dataset must be obtained separately from the official Landslide4Sense challenge repositories and placed in the project structure under:
-`D:\slideland\dataset\Landslide4Sense`
+## 6. Landslide4Sense Dataset & Setup
+The raw Landslide4Sense dataset is **intentionally NOT stored in this GitHub repository** because of its large size (~9.66 GB total raw size). Team members should clone the repository first, and then separately download and set up the dataset locally.
 
-Expected directory structure:
+### A. Download Source
+1. **Official IARAI Download Links**:
+   *   **Training Set (with labels)**: [Download Training Data (Cloud IARAI)](https://cloud.iarai.ac.at/index.php/s/KrwKngeXN7KjkFm)
+   *   **Validation Set (no labels)**: [Download Validation Data (Cloud IARAI)](https://cloud.iarai.ac.at/index.php/s/N6TacGsfr5nRNWr)
+2. Obtain both zip files (`TrainData.zip` and `ValidData.zip`) and extract them locally.
+
+### B. Expected Dataset Folder Structure
+Place the extracted folders under the `D:\slideland\dataset` directory. The project's deep learning scripts and Django backend serializer expect EXACTLY the following relative file paths:
+
 ```text
 dataset/Landslide4Sense/
 ├── TrainData/
-│   ├── img/    # image_1.h5 ... image_3799.h5 (128x128x14)
-│   └── mask/   # mask_1.h5 ... mask_3799.h5 (128x128)
+│   ├── img/     # image_1.h5 ... image_3799.h5 (14-channel satellite patches)
+│   └── mask/    # mask_1.h5 ... mask_3799.h5 (1-channel binary ground truths)
 └── ValidData/
-    └── img/    # image_1.h5 ... image_245.h5 (128x128x14, no masks)
+    └── img/     # image_1.h5 ... image_245.h5 (no ground truth masks available)
 ```
-*Note: The raw dataset is excluded from Git tracking.*
+
+> [!IMPORTANT]
+> **Git Ignore Enforcement**:
+> The following paths, files, and extensions must remain outside the repository commits:
+> *   `dataset/` (the entire folder is ignored at line 17 of `.gitignore`)
+> *   `TrainData/`, `ValidData/`, `TestData/` (implicitly ignored)
+> *   `*.h5`, `*.hdf5` (HDF5 satellite files)
+> *   All downloaded dataset `.zip` archives (e.g. `TrainData.zip`)
+
+### C. Operations and Dataset Requirements
+Not all operations require the entire 10 GB dataset. Depending on what you are running, check the data requirements below:
+
+| Operation | Dataset Requirement | Description |
+| :--- | :--- | :--- |
+| **Running the full dashboard** | Minimal demo files | The dynamic dashboard fetches weather and roads from live APIs. However, for local developer testing, the U-Net inference adapter maps seeded zones to specific HDF5 files (e.g. `image_241.h5` for Sohra, `image_1851.h5` for Mangan). Therefore, the specific image files in `TrainData/img/` must exist locally to show ML predictions for those demo zones. |
+| **Running standalone inference** | Target image patch | The predictor expects the absolute path to a specific `.h5` file (e.g., `image_241.h5`) to generate the output probability map. |
+| **Running model evaluation** | Validation split set | The evaluation runner (`run_evaluation.py`) requires all 760 validation files listed in `val_split.txt` with their corresponding images and masks under `TrainData/` to compute confusion matrices and F1 scores. |
+| **Model training/retraining** | Full dataset | Requires the entire `TrainData` directory containing 3,799 images and masks. |
+
+### D. Dataset Verification Checklist
+Before running the project, verify your dataset layout:
+- [ ] `dataset/` directory exists under `D:\slideland\`.
+- [ ] `dataset/Landslide4Sense/TrainData/` exists.
+- [ ] `dataset/Landslide4Sense/ValidData/` exists.
+- [ ] Mapped demo files are present (e.g., `dataset/Landslide4Sense/TrainData/img/image_241.h5`).
+- [ ] Run `git status` to verify that **no HDF5 files or dataset directories** are staged or untracked by Git.
+
+#### Windows Verification Example
+You can verify the dataset folder layout using standard Windows Command Prompt (CMD) or PowerShell:
+```cmd
+cd D:\slideland
+dir dataset\Landslide4Sense
+dir dataset\Landslide4Sense\TrainData\img\image_241.h5
+```
+It should report the directory listing showing `TrainData` and `ValidData`, and locate `image_241.h5` (1.75 MB).
+
+### E. Team Workflow
+1. **Clone the repository**: `git clone https://github.com/faizkhan013/SlideAlert.git`
+2. **Install dependencies**: Set up python environment (`.venv`) and install via `pip install -r ai_ml/requirements.txt`. Install node packages (`npm install` under `frontend/`).
+3. **Download dataset separately**: Fetch training/validation zips from IARAI cloud.
+4. **Place dataset**: Move the folders to `D:\slideland\dataset\Landslide4Sense\`.
+5. **Verify structure**: Check structure via the checklist.
+6. **Run dashboard locally**: Double-click `start_dev.bat` to spin up DRF backend and React frontend.
 
 ---
 
