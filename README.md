@@ -67,23 +67,27 @@ The application is decoupled into three core project directories:
 The raw Landslide4Sense dataset is **intentionally NOT stored in this GitHub repository** because of its large size (~9.66 GB total raw size). Team members should clone the repository first, and then separately download and set up the dataset locally.
 
 ### A. Download Source
-1. Download the Landslide4Sense dataset from the official Landslide4Sense source/competition page. The original direct Cloud IARAI download links are no longer available.
-2. Refer to the official [iarai/Landslide4Sense-2022 GitHub Repository](https://github.com/iarai/Landslide4Sense-2022) which documents the dataset requirements and challenge structure.
-3. Extract the downloaded dataset files locally. The official dataset structure includes:
-   *   `TrainData/` containing `img/` and `mask/` folders.
-   *   `ValidData/` containing `img/` folder.
-   *   `TestData/` containing `img/` folder.
+1. Download the Landslide4Sense dataset from the official Zenodo research record:
+   [Download Landslide4Sense Dataset — Zenodo](https://zenodo.org/records/10463239)
+2. The Zenodo record contains the following downloadable files:
+   *   `TrainData.zip` (2.5 GB) — training images and landslide masks.
+   *   `ValidData.zip` (143.4 MB) — validation images (no labels).
+   *   `TestData.zip` (470.9 MB) — test images (no labels).
+3. Refer to the official [iarai/Landslide4Sense-2022 GitHub Repository](https://github.com/iarai/Landslide4Sense-2022) for additional challenge background and documentation if needed.
 
 ### B. Expected Dataset Folder Structure
-Place the extracted folders under the `D:\slideland\dataset` directory. The project's deep learning scripts and Django backend serializer expect EXACTLY the following relative file paths:
+After downloading and extracting, place the dataset locally in your workspace at `D:\slideland\dataset\Landslide4Sense\`. The deep learning scripts, evaluation suite, and Django backend adapter expect EXACTLY the following structure:
 
 ```text
-dataset/Landslide4Sense/
-├── TrainData/
-│   ├── img/     # image_1.h5 ... image_3799.h5 (14-channel satellite patches)
-│   └── mask/    # mask_1.h5 ... mask_3799.h5 (1-channel binary ground truths)
-└── ValidData/
-    └── img/     # image_1.h5 ... image_245.h5 (no ground truth masks available)
+dataset/
+└── Landslide4Sense/
+    ├── TrainData/
+    │   ├── img/     # image_1.h5 ... image_3799.h5 (14-channel satellite patches)
+    │   └── mask/    # mask_1.h5 ... mask_3799.h5 (1-channel binary ground truths)
+    ├── ValidData/
+    │   └── img/     # image_1.h5 ... image_245.h5 (no ground truth masks available)
+    └── TestData/
+        └── img/     # image_1.h5 ... image_800.h5 (no ground truth masks available)
 ```
 
 > [!IMPORTANT]
