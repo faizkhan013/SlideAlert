@@ -1,0 +1,3 @@
+actual_class,predicted_non_landslide,predicted_landslide
+actual_non_landslide,12079324,99066
+actual_landslide,73078,200372

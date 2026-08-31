@@ -55,11 +55,28 @@ The application is decoupled into three core project directories:
 
 ---
 
-## 5. U-Net Model
+## 5. U-Net Segmentation Models
+
+### Production Candidate — Experiment 2 (Default)
 *   **Architecture**: 2D U-Net with 14 input channels (12 Sentinel-2 multispectral bands + 1 ALOS PALSAR Slope band + 1 ALOS PALSAR DEM band) and 1 output channel.
-*   **Parameters**: Approximately 31,000,000 parameters.
-*   **Trained Weight Checkpoint**: Saved locally at `ai_ml/models/baseline_unet_best.pth`.
-*   **Loss Function**: Combined BCE Loss (0.50) + Dice Loss (0.50) to optimize pixel-level accuracy alongside boundary overlap.
+*   **Weight Checkpoint**: `ai_ml/models/experiments/improved_unet/improved_unet_v2_best.pth`
+*   **Loss Function**: Combined **Focal Loss + Dice Loss** ($\alpha=0.25, \gamma=2.0$, weight=0.5 / 0.5)
+*   **Training**: 2 Epochs with Adam optimizer ($lr=1\times 10^{-3}$, weight decay $=5\times 10^{-4}$).
+*   **Performance (760 Holdout Validation Samples at 0.50 Threshold)**:
+    *   **Accuracy**: `98.62%`
+    *   **Precision**: `66.92%` (nearly doubled vs baseline `35.60%`)
+    *   **Recall**: `73.28%` (maintains high landslide capture)
+    *   **F1 / Dice**: `69.95%` (+20.62% absolute over baseline `49.33%`)
+    *   **IoU**: `53.79%` (+21.05% absolute over baseline `32.74%`)
+    *   **False Positives**: `99,066` (**75.06% reduction** from baseline `397,285`)
+
+### Production Baseline (Permanent Fallback)
+*   **Weight Checkpoint**: `ai_ml/models/baseline_unet_best.pth` (tracked via Git LFS).
+*   **Loss Function**: Combined BCE Loss (0.50) + Dice Loss (0.50), 1 Epoch (F1 `49.33%`, IoU `32.74%`).
+*   **Dynamic Fallback / Selection**: Set `SLIDEALERT_MODEL_PATH` to override model checkpoint. Unset defaults to Experiment 2 with automatic baseline fallback if candidate weights are absent.
+
+> [!NOTE]
+> Pixel-level segmentation metrics measure spatial boundary accuracy on benchmark imagery and are **not future landslide prediction accuracy**. Future risk assessment is computed by combining spatial segmentation with real-time precipitation forecasts via the `LandslideRiskEngine`.
 
 ---
 

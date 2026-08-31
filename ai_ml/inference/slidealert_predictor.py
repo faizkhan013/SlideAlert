@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 # Ensure slideland root is in search path
 sys.path.append("D:/slideland")
 
-from ai_ml.inference.predictor import SlideAlertPredictor
+from ai_ml.inference.predictor import SlideAlertPredictor, DEFAULT_MODEL_PATH
 from ai_ml.risk_model.risk_engine import LandslideRiskEngine
 
 class SlideAlertMLAdapter:
@@ -56,13 +56,16 @@ class SlideAlertMLAdapter:
 
 # Global helper function for simple function call integration
 _ADAPTER_INSTANCE = None
+_CACHED_MODEL_PATH = None
 
-def get_ml_prediction(image_path_or_array, rainfall_series, threshold=0.5):
+def get_ml_prediction(image_path_or_array, rainfall_series, threshold=0.5, model_path=None):
     """
     Global helper function to easily run predictions from Django backend.
     Caches the adapter instance to prevent repeating model weight loads on every call.
     """
-    global _ADAPTER_INSTANCE
-    if _ADAPTER_INSTANCE is None:
-        _ADAPTER_INSTANCE = SlideAlertMLAdapter()
+    global _ADAPTER_INSTANCE, _CACHED_MODEL_PATH
+    current_path = model_path if model_path else os.environ.get("SLIDEALERT_MODEL_PATH", DEFAULT_MODEL_PATH)
+    if _ADAPTER_INSTANCE is None or _CACHED_MODEL_PATH != current_path:
+        _ADAPTER_INSTANCE = SlideAlertMLAdapter(model_path=current_path)
+        _CACHED_MODEL_PATH = current_path
     return _ADAPTER_INSTANCE.evaluate_zone(image_path_or_array, rainfall_series, threshold=threshold)
