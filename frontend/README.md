@@ -1,4 +1,4 @@
-# Terrain Watch — NER Landslide Early Warning (SIH26001)
+# SlideAlert — NER Landslide Early Warning (SIH26001)
 
 React + Vite frontend wired directly to the Django backend's zone API.
 No mock data — the app makes a single boot call to `GET /api/zones/` and

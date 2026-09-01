@@ -41,9 +41,9 @@ export default function ZoneDetailPanel({ zone, onRefreshed, roadsData, roadsLoa
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 15px', fontSize: '13px', margin: '5px 0 12px 0' }}>
             <div><strong>Risk Score:</strong> <span className="mono-val">{ml.risk_score} / 100</span></div>
             <div><strong>Risk Level:</strong> <span className="mono-val" style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>{ml.ml_risk_level}</span></div>
-            <div><strong>Landslide Probability:</strong> <span className="mono-val">{Math.round(ml.landslide_probability * 100)}%</span></div>
-            <div><strong>Predicted Landslide Area:</strong> <span className="mono-val">{Math.round(ml.landslide_area_percent)}%</span></div>
-            <div><strong>Confidence:</strong> <span className="mono-val">{Math.round(ml.confidence * 100)}%</span></div>
+            <div><strong>Landslide Probability:</strong> <span className="mono-val">{typeof ml.landslide_probability === 'number' ? `${(ml.landslide_probability <= 1.0 ? ml.landslide_probability * 100 : ml.landslide_probability).toFixed(1)}%` : '—'}</span></div>
+            <div><strong>Predicted Landslide Area:</strong> <span className="mono-val">{typeof (ml.predicted_landslide_area ?? ml.landslide_area_percent) === 'number' ? `${(ml.predicted_landslide_area ?? ml.landslide_area_percent).toFixed(1)}%` : '—'}</span></div>
+            <div><strong>Confidence:</strong> <span className="mono-val">{typeof ml.confidence === 'number' ? `${Math.round(ml.confidence <= 1.0 ? ml.confidence * 100 : ml.confidence)}%` : '—'}</span></div>
           </div>
 
           {ml.risk_factors && ml.risk_factors.length > 0 && (

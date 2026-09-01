@@ -94,7 +94,8 @@ class SlideAlertPredictor:
         return {
             "probability_map": probabilities,
             "binary_mask": binary_mask,
-            "landslide_probability": max_prob,
+            "landslide_probability": mean_prob,
+            "predicted_landslide_area": float(landslide_area_percent),
             "landslide_pixel_count": predicted_landslide_pixels,
             "total_pixel_count": total_pixels,
             "landslide_area_percent": float(landslide_area_percent),

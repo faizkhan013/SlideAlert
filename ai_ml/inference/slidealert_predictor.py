@@ -33,19 +33,22 @@ class SlideAlertMLAdapter:
         
         # Step 2: Risk Scoring & Factor Assessment
         risk_res = self.risk_engine.compute_risk(
-            landslide_probability=seg_res["landslide_probability"],
+            landslide_probability=seg_res["max_probability"],
             landslide_area_percent=seg_res["landslide_area_percent"],
             rainfall_series=rainfall_series
         )
         
-        # Step 3: Format payload for Django backward-compatible API
+        # Step 3: Format payload for Django API & Frontend
         predicted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         
         return {
             "ml_enabled": True,
             "ml_prediction": {
-                "landslide_probability": float(round(risk_res["landslide_probability"], 4)),
-                "landslide_area_percent": float(round(risk_res["landslide_area_percent"], 2)),
+                "landslide_probability": float(round(seg_res["mean_probability"], 4)),
+                "predicted_landslide_area": float(round(seg_res["landslide_area_percent"], 2)),
+                "landslide_area_percent": float(round(seg_res["landslide_area_percent"], 2)),
+                "mean_probability": float(round(seg_res["mean_probability"], 4)),
+                "max_probability": float(round(seg_res["max_probability"], 4)),
                 "confidence": float(round(risk_res["confidence"], 2)),
                 "risk_score": int(risk_res["risk_score"]),
                 "risk_factors": risk_res["risk_factors"],
