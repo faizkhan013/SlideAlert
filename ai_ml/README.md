@@ -76,27 +76,55 @@ ai_ml/
 
 ---
 
-## 4. How to Run Training, Inference, and Evaluation
+## 4. Models & Production Candidate (Experiment 2)
+
+### Model Hierarchy & Selection
+*   **Production Candidate (Default)**: `ai_ml/models/experiments/improved_unet/improved_unet_v2_best.pth`
+    *   **Loss Function**: Combined **Focal Loss + Dice Loss** ($\alpha=0.25, \gamma=2.0$, weight=0.5 / 0.5)
+    *   **Training**: 2 Epochs on Adam optimizer (learning rate $1\times 10^{-3}$, weight decay $5\times 10^{-4}$).
+    *   **Performance (Holdout Val at 0.50 Threshold)**:
+        *   Accuracy: `98.62%`
+        *   Precision: `66.92%` (nearly doubled vs baseline `35.60%`)
+        *   Recall: `73.28%` (recovers landslide detection vs 1-epoch Exp 1 `58.77%`)
+        *   F1 / Dice: `69.95%` (+20.62% absolute over baseline `49.33%`)
+        *   IoU: `53.79%` (+21.05% absolute over baseline `32.74%`)
+        *   False Positives: `99,066` (**75.06% reduction** from baseline `397,285`)
+*   **Production Baseline (Permanent Fallback)**: `ai_ml/models/baseline_unet_best.pth`
+    *   **Loss Function**: 0.5 BCE + 0.5 Dice Loss (1 Epoch, F1 `49.33%`, IoU `32.74%`).
+    *   Preserved byte-for-byte as a permanent fallback.
+*   **Experiment 3 Finding**: Training for a 3rd epoch increased validation loss from `0.1771` to `0.1806`, triggering early stopping and confirming that 2 epochs represents the optimal convergence point.
+
+### Dynamic Model Switching
+Set the `SLIDEALERT_MODEL_PATH` environment variable to explicitly override the model checkpoint:
+```bash
+# Explicitly use baseline fallback
+export SLIDEALERT_MODEL_PATH="ai_ml/models/baseline_unet_best.pth"
+
+# Unset to use default Experiment 2 candidate
+unset SLIDEALERT_MODEL_PATH
+```
+
+---
+
+## 5. How to Run Training, Inference, and Evaluation
 
 ### Run Training
-To execute the training script from the project root:
+To execute the experimental training pipeline:
 ```bash
-python ai_ml/segmentation/train.py
+python ai_ml/segmentation/train_experiment_v2.py
 ```
-This splits the training data 80/20 (saved to `models/train_split.txt` and `models/val_split.txt`) and saves the model checkpoint to `models/baseline_unet_best.pth`.
 
 ### Run Model Evaluation
-To evaluate the checkpoint and compute metrics across multiple thresholds:
+To evaluate a checkpoint across multiple thresholds (0.30–0.70):
 ```bash
 python ai_ml/models/evaluation/run_evaluation.py
 ```
-This saves `final_metrics.csv`, `confusion_matrix.csv`, `threshold_comparison.csv`, and qualitative plots inside `models/evaluation/`.
 
 ### Run Standalone Inference
 ```python
 from ai_ml.inference.predictor import SlideAlertPredictor
 
-# Initialize predictor (loads baseline checkpoint by default)
+# Initialize predictor (loads Experiment 2 candidate by default, with baseline fallback)
 predictor = SlideAlertPredictor()
 
 # Predict on an image path
@@ -106,10 +134,16 @@ print("Landslide Area %:", results["landslide_area_percent"])
 
 ---
 
-## 5. Integration Flow with Django Backend
+## 6. Operating Thresholds
+*   **Default Threshold (`0.50`)**: Recommended balanced operating threshold (Precision: `66.92%`, Recall: `73.28%`, F1: `69.95%`).
+*   **High-Sensitivity Threshold (`0.30`)**: Maximizes hazard capture for early-warning scenarios (Recall: `75.45%`, Precision: `64.58%`, F1: `69.59%`).
+
+---
+
+## 7. Integration Flow with Django Backend
 
 ```text
-[Django ZoneSerializer]
+[Django ZoneSerializer / Views]
        │
        ▼ (invokes)
 [ai_ml.inference.slidealert_predictor.get_ml_prediction]
@@ -127,12 +161,12 @@ print("Landslide Area %:", results["landslide_area_percent"])
 {
     "ml_enabled": true,
     "ml_prediction": {
-        "landslide_probability": 0.9999,
-        "landslide_area_percent": 19.42,
+        "landslide_probability": 1.0,
+        "landslide_area_percent": 15.06,
         "confidence": 0.9,
-        "risk_score": 69,
+        "risk_score": 98,
         "risk_factors": ["High landslide probability", ...],
-        "ml_risk_level": "high",
+        "ml_risk_level": "critical",
         "predicted_at": "..."
     }
 }
@@ -140,9 +174,10 @@ print("Landslide Area %:", results["landslide_area_percent"])
 
 ---
 
-## 6. Important Limitations
+## 8. Important Limitations
 
-1.  **Spatial Segmentation vs Forecasting**: The U-Net model performs **spatial image segmentation** (locating existing landslide areas in satellite imagery). It does **not** predict future landslide occurrences.
+1.  **Spatial Segmentation vs Forecasting**: The U-Net model performs **spatial image segmentation** (locating existing landslide features in multi-spectral and DEM satellite imagery). Pixel-level metrics reflect segmentation accuracy on benchmark holdouts, **not future-event prediction accuracy**.
 2.  **Rainfall Risk Calibration**: To compute active hazards, the `LandslideRiskEngine` combines the spatial vulnerability index from the U-Net with dynamic precipitation forecasts.
 3.  **Heuristic Classification**: Stage 2 utilizes heuristic risk rules derived from geological indices because historical time-aligned landslide event records are unavailable.
 4.  **Demo Mode**: In production, `SLIDEALERT_DEMO_MODE` is enabled, mapping specific stations to representative HDF5 files on disk for demonstration purposes. Other stations safely report `ml_enabled: false`.
+5.  **External Dataset**: The raw Landslide4Sense dataset is intentionally excluded from Git and stored externally.

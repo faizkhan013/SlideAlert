@@ -15,7 +15,15 @@ sys.path.append("D:/slideland")
 from ai_ml.preprocessing.normalization import BandNormalizer
 from ai_ml.segmentation.model import UNet
 
-DEFAULT_MODEL_PATH = "D:/slideland/ai_ml/models/baseline_unet_best.pth"
+# Project base directory
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Candidate production model (Experiment 2) with baseline fallback available
+FALLBACK_BASELINE_PATH = os.path.join(BASE_DIR, "ai_ml", "models", "baseline_unet_best.pth")
+DEFAULT_MODEL_PATH = os.environ.get(
+    "SLIDEALERT_MODEL_PATH",
+    os.path.join(BASE_DIR, "ai_ml", "models", "experiments", "improved_unet", "improved_unet_v2_best.pth")
+)
 
 class SlideAlertPredictor:
     """
@@ -27,7 +35,10 @@ class SlideAlertPredictor:
         self.model = UNet(n_channels=14, n_classes=1)
         self.normalizer = BandNormalizer()
         
-        path = model_path if model_path else DEFAULT_MODEL_PATH
+        path = model_path if model_path else os.environ.get("SLIDEALERT_MODEL_PATH", DEFAULT_MODEL_PATH)
+        if not os.path.exists(path) and os.path.exists(FALLBACK_BASELINE_PATH):
+            path = FALLBACK_BASELINE_PATH
+
         if os.path.exists(path):
             self.model.load_state_dict(torch.load(path, map_location=self.device))
             # print(f"Model loaded successfully from: {path} on device: {self.device}")
